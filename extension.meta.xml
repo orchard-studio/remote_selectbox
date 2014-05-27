@@ -17,11 +17,18 @@
 			<name github="DeuxHuitHuit" symphony="nitriques" twitter="DeuxHuitHuit">Deux Huit Huit</name>
 			<website>http://deuxhuithuit.com/</website>
 		</author>
+		<author>
+			<name github="andrewminton" symphony="moonoo2" twitter="andrewminton">Andrew Minton</name>
+			<website>http://andrewminton.co.uk/</website>
+		</author>
 	</authors>
 	<dependencies>
 		<!-- None -->
 	</dependencies>
 	<releases>
+		<release version="1.1" date="2014-05-27" min="2.3.3">
+			- Enhancements to the field for Autocomplete
+		</release>
 		<release version="1.0" date="2013-01-29" min="2.3.3">
 			- First release
 		</release>

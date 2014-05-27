@@ -24,6 +24,7 @@
 			$this->set('show_column', 'yes');
 			$this->set('location', 'sidebar');
 			$this->set('required', 'no');
+			$this->set('autocomplete', 'no');
 		}
 
 	/*-------------------------------------------------------------------------
@@ -100,6 +101,13 @@
 			");
 		}
 
+		public static function updateFieldTable_Autocomplete() {
+			return Symphony::Database()->query("
+				ALTER TABLE `".self::TABLE_NAME. "` ADD `autocomplete` enum('yes','no') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no';
+			");
+
+		}
+
 	/*-------------------------------------------------------------------------
 		Utilities:
 	-------------------------------------------------------------------------*/
@@ -113,6 +121,7 @@
 		public function findDefaults(array &$settings){
 			if(!isset($settings['allow_multiple_selection'])) $settings['allow_multiple_selection'] = 'no';
 			if(!isset($settings['sort_options'])) $settings['sort_options'] = 'no';
+			if(!isset($settings['autocomplete'])) $settings['autocomplete'] = 'no';
 		}
 
 		public function displaySettingsPanel(XMLElement &$wrapper, $errors = null) {
@@ -129,8 +138,8 @@
 			
 			if(isset($errors['data_url'])) $wrapper->appendChild(Widget::Error($div, $errors['data_url']));
 			else $wrapper->appendChild($div);
-			
-			$div = new XMLElement('div', NULL, array('class' => 'two columns'));
+			$fieldset = new XMLElement('fieldset');
+			$div = new XMLElement('div', NULL, array('class' => 'three columns'));
 
 			// Allow selection of multiple items
 			/*$label = Widget::Label();
@@ -148,6 +157,16 @@
 			$label->setValue(__('%s Sort all options alphabetically', array($input->generate())));
 			$div->appendChild($label);
 			$wrapper->appendChild($div);*/
+
+			// Autocomplete?
+			$label = Widget::Label();
+			$label->setAttribute('class', 'column');
+			$input = Widget::Input('fields['.$this->get('sortorder').'][autocomplete]', 'yes', 'checkbox');
+			if($this->get('autocomplete') == 'yes') $input->setAttribute('checked', 'checked');
+			$label->setValue(__('%s Autocomplete search of select items', array($input->generate())));
+			$div->appendChild($label);
+			$fieldset->appendChild($div);
+			$wrapper->appendChild($fieldset);
 
 			$div = new XMLElement('div', NULL, array('class' => 'two columns'));
 			$this->appendShowColumnCheckbox($div);
@@ -177,6 +196,7 @@
 			if($this->get('data_url') != '') $fields['data_url'] = $this->get('data_url');
 			$fields['allow_multiple_selection'] = ($this->get('allow_multiple_selection') ? $this->get('allow_multiple_selection') : 'no');
 			$fields['sort_options'] = $this->get('sort_options') == 'yes' ? 'yes' : 'no';
+			$fields['autocomplete'] = $this->get('autocomplete') == 'yes' ? 'yes' : 'no';
 
 			return FieldManager::saveSettings($id, $fields);
 		}
@@ -214,6 +234,9 @@
 			$select = Widget::Select($fieldname, $options, ($this->get('allow_multiple_selection') == 'yes' ? array('multiple' => 'multiple', 'size' => count($options)) : NULL));
 			
 			$select->setAttribute('data-value', implode(',',$value));
+			if($this->get('autocomplete')=='yes'){
+				$select->setAttribute('class', 'autocomplete');
+			}
 			$select->setAttribute('data-url', $this->get('data_url'));
 			$select->setAttribute('data-required', $this->get('required') == 'yes');
 			
@@ -226,23 +249,13 @@
 		public function processRawFieldData($data, &$status, &$message=null, $simulate=false, $entry_id=NULL){
 			$status = self::__OK__;
 
-			if(!is_array($data)) {
-				return array(
-					'value' => $data,
-					'handle' => Lang::createHandle($data)
-				);
-			}
+			$ids = $data['handle'];
+			unset($data['handle']);
 
-			if(empty($data)) return null;
-
-			$result = array(
-				'value' => array(),
-				'handle' => array()
-			);
-
-			foreach($data as $value){
-				$result['value'][] = $value;
-				$result['handle'][] = Lang::createHandle($value);
+			if(is_array($data)){
+				$i = implode(',',$data);
+				$result['handle'] = $ids;
+				$result['value'] = $i;
 			}
 
 			return $result;
@@ -251,6 +264,11 @@
 	/*-------------------------------------------------------------------------
 		Output:
 	-------------------------------------------------------------------------*/
+
+		function merge($value, $handle) {
+			$count = min(count($value), count($handle));
+			return array_combine(array_slice($value, 0, $count), array_slice($handle, 0, $count));
+		}
 
 		public function appendFormattedElement(XMLElement &$wrapper, $data, $encode = false, $mode = null, $entry_id = null) {
 			if (!is_array($data) or is_null($data['value'])) return;
@@ -263,24 +281,35 @@
 					'value'		=> array($data['value'])
 				);
 			}
-
-			foreach ($data['value'] as $index => $value) {
+			$data = array_merge($data['value'],$data['handle']);			
+			$d['handle'] = explode(',',$data[0]);		
+			$d['value'] = explode(',',$data[1]);		
+			$d = $this->array_combine2($d['handle'],$d['value']);	
+			foreach($d as $index => $value){
 				$list->appendChild(new XMLElement(
 					'item',
 					General::sanitize($value),
 					array(
-						'handle'	=> $data['handle'][$index]
+						'id' => $index,
+						'handle'	=> Lang::createHandle($value)
 					)
-				));
-			}
-
+				));				
+			}	
 			$wrapper->appendChild($list);
 		}
 
 		public function prepareTableValue($data, XMLElement $link=NULL, $entry_id = null){
 			$value = $this->prepareExportValue($data, ExportableField::LIST_OF + ExportableField::VALUE, $entry_id);
 
-			return parent::prepareTableValue(array('value' => implode(', ', $value)), $link, $entry_id = null);
+			$data = explode(',',$data['handle']);					
+			$check = count($data);			
+			if($check > 1){
+				$check = '('.$check.')  Selected';
+			}
+			else{
+				$check = $data[0];
+			}				
+			return parent::prepareTableValue(array('value' => $check), $link, $entry_id = null);
 		}
 
 		public function getParameterPoolValue(array $data, $entry_id = null) {

@@ -90,7 +90,19 @@
 		 * @param string $previousVersion
 		 */
 		public function update($previousVersion) {
-			return true;
+
+			$ret = true;
+
+			// are we updating from lower than 1.1 ?
+			if ($ret && version_compare($previousVersion,'1.1') == -1) {
+				// update for table with autocomplete
+				$ret_autocomplete = FieldRemote_Selectbox::updateFieldTable_Autocomplete();
+
+				// set the return value
+				$ret = $ret_autocomplete;
+			}
+
+			return $ret;
 		}
 
 		/**
