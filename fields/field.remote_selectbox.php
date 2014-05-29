@@ -89,6 +89,7 @@
 				  `data_url` text COLLATE utf8_unicode_ci,
 				  `allow_multiple_selection` enum('yes','no') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no',
 				  `sort_options` enum('yes','no') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no',
+				  `autocomplete` enum('yes','no') COLLATE utf8_unicode_ci NOT NULL DEFAULT 'no',
 				  PRIMARY KEY (`id`),
 				  UNIQUE KEY `field_id` (`field_id`)
 				) ENGINE=MyISAM DEFAULT CHARSET=utf8 COLLATE=utf8_unicode_ci;
@@ -97,7 +98,7 @@
 		
 		public static function deleteFieldTable() {
 			return Symphony::Database()->query("
-				DROP TABLE IF EXISTS `" . self::TABLE_NAME . "
+				DROP TABLE IF EXISTS `" . self::TABLE_NAME . "`
 			");
 		}
 
@@ -142,12 +143,12 @@
 			$div = new XMLElement('div', NULL, array('class' => 'three columns'));
 
 			// Allow selection of multiple items
-			/*$label = Widget::Label();
+			$label = Widget::Label();
 			$label->setAttribute('class', 'column');
 			$input = Widget::Input('fields['.$this->get('sortorder').'][allow_multiple_selection]', 'yes', 'checkbox');
 			if($this->get('allow_multiple_selection') == 'yes') $input->setAttribute('checked', 'checked');
 			$label->setValue(__('%s Allow selection of multiple options', array($input->generate())));
-			$div->appendChild($label);*/
+			$div->appendChild($label);
 
 			// Sort options?
 			/*$label = Widget::Label();
@@ -245,17 +246,20 @@
 			if($flagWithError != null) $wrapper->appendChild(Widget::Error($label, $flagWithError));
 			else $wrapper->appendChild($label);
 		}
-
 		public function processRawFieldData($data, &$status, &$message=null, $simulate=false, $entry_id=NULL){
 			$status = self::__OK__;
-
-			$ids = $data['handle'];
-			unset($data['handle']);
+			//var_dump($data);
+			//die;
+			$ids = $data;//['handle'];
+			//unset($data['handle']);
 
 			if(is_array($data)){
 				$i = implode(',',$data);
-				$result['handle'] = $ids;
+				$result['handle'] = $i;
 				$result['value'] = $i;
+			}else{
+				$result['handle'] = $ids;
+				$result['value'] = $ids;
 			}
 
 			return $result;
@@ -265,7 +269,7 @@
 		Output:
 	-------------------------------------------------------------------------*/
 
-		function merge($value, $handle) {
+		function merge($handle, $value) {
 			$count = min(count($value), count($handle));
 			return array_combine(array_slice($value, 0, $count), array_slice($handle, 0, $count));
 		}
@@ -284,7 +288,7 @@
 			$data = array_merge($data['value'],$data['handle']);			
 			$d['handle'] = explode(',',$data[0]);		
 			$d['value'] = explode(',',$data[1]);		
-			$d = $this->array_combine2($d['handle'],$d['value']);	
+			$d = $this->merge($d['handle'],$d['value']);	
 			foreach($d as $index => $value){
 				$list->appendChild(new XMLElement(
 					'item',

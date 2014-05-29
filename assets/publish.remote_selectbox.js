@@ -14,18 +14,24 @@
 		$.get(t.attr('data-url'), function (data) {
 			if (!!data && !!data.length) {
 				var options = [];
+				var multiple = t.attr('multiple');
 				var selectedValue = t.attr('data-value');
 				var required = ~~t.attr('data-required');
 				
 				if (required) {
 					t.empty();
 				}
+				var multiples = selectedValue.split(',');
 				
 				$.each(data, function (index, d) {
 					var o = $('<option />')
 						.attr('value', d.value)
 						.text(d.text);
-					
+					$.each(multiples, function (i,e){
+						if (e == d.value) {
+							o.attr('selected', 'selected');
+						}
+					});
 					if (selectedValue == d.value) {
 						o.attr('selected', 'selected');
 					}
