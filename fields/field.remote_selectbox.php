@@ -248,11 +248,7 @@
 		}
 		public function processRawFieldData($data, &$status, &$message=null, $simulate=false, $entry_id=NULL){
 			$status = self::__OK__;
-			//var_dump($data);
-			//die;
-			$ids = $data;//['handle'];
-			//unset($data['handle']);
-
+			$ids = $data;
 			if(is_array($data)){
 				$i = implode(',',$data);
 				$result['handle'] = $i;

@@ -4,7 +4,7 @@
  * @author: Deux Huit Huit
  * 
  */
-(function ($) {
+(function ($,Symphony) {
 	
 	'use strict';
 	
@@ -35,11 +35,12 @@
 					options.push(o);
 				});
 				t.append(options);
+				t.hasClass('autocomplete')? t.selectize({plugins: ['remove_button','restore_on_backspace']}):'';
 			}
 		});
 	};
 	
-	var init = function () {
+	var init = function (context) {
 		$('#contents div.field-remote_selectbox select').each(initOne);
 	};
 	

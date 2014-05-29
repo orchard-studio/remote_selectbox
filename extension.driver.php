@@ -60,19 +60,23 @@
 			if($c['driver'] == 'publish'){
 				
 				//var_dump($context, $c);die;
-				
+				/*Administration::instance()->Page->addScriptToHead(
+					URL . '/extensions/remote_selectbox/assets/selectize.js',
+					time(),
+					false
+				);*/
 				Administration::instance()->Page->addScriptToHead(
 					URL . '/extensions/remote_selectbox/assets/publish.remote_selectbox.js',
 					time(),
 					false
 				);
-				/*
+				
 				Administration::instance()->Page->addStylesheetToHead(
-					URL . '/extensions/remote_selectbox/assets/publish.remote_selectbox.css',
+					URL . '/extensions/remote_selectbox/assets/symphony.selectize.css',
 					'screen',
 					time() + 1,
 					false
-				);*/
+				);
 			}
 		}
 		
